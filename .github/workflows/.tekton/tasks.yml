@@ -1,0 +1,33 @@
+apiVersion: tekton.dev/v1beta1
+kind: Task
+metadata:
+  name: cleanup
+spec:
+  description: "Cleanup task to remove workspace artifacts or temporary files"
+  steps:
+    - name: remove-junk
+      image: alpine:latest
+      script: |
+        #!/bin/sh
+        echo "Cleaning up workspace..."
+        rm -rf /workspace/project/*.pyc /workspace/project/__pycache__
+        echo "Cleanup completed successfully."
+
+---
+apiVersion: tekton.dev/v1beta1
+kind: Task
+metadata:
+  name: run-tests
+spec:
+  description: "Task to run unit tests using nose"
+  workspaces:
+    - name: source
+  steps:
+    - name: nose-tests
+      image: python:3.9-slim
+      workingDir: $(workspaces.source.path)
+      script: |
+        #!/usr/bin/env python3
+        pip install --upgrade pip
+        pip install nose flake8
+        nosetests -v
